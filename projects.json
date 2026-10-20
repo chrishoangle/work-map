@@ -1,0 +1,135 @@
+{
+  "intro": "Systems I've built, from deep-space networking to production data pipelines. Click any node for the case study.",
+  "groups": [
+    {
+      "id": "space",
+      "label": "Space communications"
+    },
+    {
+      "id": "data",
+      "label": "Data infrastructure",
+      "sublabel": "Cadence Group"
+    },
+    {
+      "id": "sci",
+      "label": "Scientific computing & modeling"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "jpl-dtn",
+      "group": "space",
+      "title": "NASA JPL",
+      "subtitle": "DTN bundle protocol contact-plan strategies",
+      "stack": [
+        "ION",
+        "Python",
+        "pexpect",
+        "REST APIs",
+        "Netropy"
+      ],
+      "status": "shipped",
+      "link": "https://galvanized-nerine-895.notion.site/3ff26dc9319780bba701e2bae43199ce"
+    },
+    {
+      "id": "cadence-activity",
+      "group": "data",
+      "title": "Customer activity report pipeline",
+      "subtitle": "Manual spreadsheet to scheduled workbooks and a live dashboard",
+      "stack": [
+        "Cloud Run",
+        "BigQuery",
+        "Cloud Scheduler",
+        "FastAPI",
+        "openpyxl"
+      ],
+      "status": "shipped",
+      "link": "https://galvanized-nerine-895.notion.site/3ff26dc9319780c49e6bdafb08de79ba",
+      "diagram": "cadence-pipeline"
+    },
+    {
+      "id": "cadence-spend",
+      "group": "data",
+      "title": "LLM spend aggregation report",
+      "subtitle": "Monthly LLM spend workbook",
+      "stack": [
+        "Anthropic Admin API",
+        "BigQuery",
+        "openpyxl"
+      ],
+      "status": "shipped",
+      "link": "https://galvanized-nerine-895.notion.site/3ff26dc93197803099b2fa2d0ad034bc"
+    },
+    {
+      "id": "cadence-anomaly",
+      "group": "data",
+      "title": "LLM cost anomaly detection",
+      "subtitle": "Spike, drop, and sustained-elevation detection",
+      "stack": [
+        "BigQuery",
+        "Python",
+        "FastAPI",
+        "Chart.js"
+      ],
+      "status": "shipped",
+      "link": "",
+      "diagram": "cost-anomaly"
+    },
+    {
+      "id": "space-weather",
+      "group": "sci",
+      "title": "Space weather anomaly detection",
+      "subtitle": "NOAA SWPC + NASA OMNIWeb solar wind",
+      "stack": [
+        "Python",
+        "scikit-learn",
+        "pandas",
+        "GitHub Actions"
+      ],
+      "status": "shipped",
+      "link": "https://chrishoangle.github.io/space-weather-anomaly-detection/"
+    },
+    {
+      "id": "quantum-well",
+      "group": "sci",
+      "title": "2D quantum well symmetry simulator",
+      "subtitle": "Degeneracy under square-to-rectangle deformation",
+      "stack": [
+        "Python",
+        "NumPy",
+        "SciPy",
+        "Matplotlib",
+        "React"
+      ],
+      "status": "shipped",
+      "link": "https://chrishoangle.github.io/symmetry_quantum/"
+    },
+    {
+      "id": "pm25",
+      "group": "sci",
+      "title": "Tire-wear PM2.5 EV emissions model",
+      "subtitle": "Random Forest on CARB EMFAC",
+      "stack": [
+        "Python",
+        "scikit-learn",
+        "Random Forest"
+      ],
+      "status": "shipped",
+      "link": "https://chrishoangle.github.io/"
+    }
+  ],
+  "edges": [
+    {
+      "from": "cadence-activity",
+      "to": "cadence-spend",
+      "label": "shared data, code",
+      "plain": true
+    },
+    {
+      "from": "cadence-spend",
+      "to": "cadence-anomaly",
+      "label": "shared data",
+      "plain": true
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "title": "LLM cost anomaly detection",
+  "intro": "Layered detection on daily LLM cost per function, compared against a 28-day same-weekday baseline. High-level view only; dashed boxes are planned.",
+  "groups": [
+    { "id": "in", "label": "Input" },
+    { "id": "detect", "label": "Detection" },
+    { "id": "out", "label": "Output" }
+  ],
+  "nodes": [
+    { "id": "billing", "group": "in", "title": "Billing export", "subtitle": "Daily cost per function, in BigQuery", "stack": ["GCP billing export", "BigQuery"], "status": "shipped" },
+    { "id": "events", "group": "in", "title": "Product events", "subtitle": "Daily event volume", "stack": ["PostHog", "BigQuery"], "status": "shipped" },
+
+    { "id": "spike", "group": "detect", "title": "Spike and drop checks", "subtitle": "Against a trailing baseline", "stack": ["Python", "SQL"], "status": "shipped" },
+    { "id": "sustained", "group": "detect", "title": "Sustained elevation", "subtitle": "Above p75 for 3+ consecutive days", "stack": ["Python", "SQL"], "status": "shipped" },
+    { "id": "forecast", "group": "detect", "title": "Trend forecaster", "subtitle": "Theil-Sen trend with day-of-week factors; under evaluation", "stack": ["Python", "Theil-Sen", "shrinkage"], "status": "shipped" },
+    { "id": "volume", "group": "detect", "title": "Event volume alert", "subtitle": "Same-weekday baseline, robust to one-off bursts", "stack": ["Python", "SQL"], "status": "shipped" },
+
+    { "id": "email", "group": "out", "title": "Email alerts", "subtitle": "Planned: notify on high-severity anomalies", "stack": [], "status": "planned" },
+    { "id": "log", "group": "out", "title": "Anomaly log", "subtitle": "Severity-tiered, deduplicated, in-page notifications", "stack": ["FastAPI", "Chart.js"], "status": "shipped" },
+    { "id": "dashboard", "group": "out", "title": "Cost dashboard", "subtitle": "Custom web dashboard", "stack": ["FastAPI", "Chart.js", "Cloud Run"], "status": "shipped" }
+  ],
+  "edges": [
+    { "from": "billing", "to": "spike", "label": "daily" },
+    { "from": "billing", "to": "sustained", "label": "daily" },
+    { "from": "billing", "to": "forecast", "label": "daily" },
+    { "from": "events", "to": "volume", "label": "daily" },
+    { "from": "spike", "to": "log", "label": "flag" },
+    { "from": "sustained", "to": "log", "label": "flag" },
+    { "from": "volume", "to": "log", "label": "flag" },
+    { "from": "forecast", "to": "dashboard", "label": "forecast" },
+    { "from": "log", "to": "dashboard", "label": "panel" },
+    { "from": "log", "to": "email", "label": "planned", "status": "planned" }
+  ]
+}

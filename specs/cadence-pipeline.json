@@ -1,0 +1,40 @@
+{
+  "title": "Cadence Group: reporting data pipeline",
+  "intro": "High-level view only: no internal hostnames, table names, or customer data. Replaced a manually updated spreadsheet with scheduled workbooks and a live dashboard. Dashed boxes are planned.",
+  "groups": [
+    { "id": "sources", "label": "Sources" },
+    { "id": "warehouse", "label": "Warehouse", "sublabel": "968K+ rows a day" },
+    { "id": "outputs", "label": "Delivery" }
+  ],
+  "nodes": [
+    { "id": "billing", "group": "sources", "title": "Billing exports", "subtitle": "Cloud spend, continuous native export", "stack": ["GCP billing export", "BigQuery"], "status": "shipped" },
+    { "id": "supabase", "group": "sources", "title": "Supabase", "subtitle": "Cases, customers, users", "stack": ["Supabase", "Cloud Run Job"], "status": "shipped" },
+    { "id": "posthog", "group": "sources", "title": "PostHog", "subtitle": "Product events", "stack": ["PostHog", "Cloud Run Job"], "status": "shipped" },
+    { "id": "invited", "group": "sources", "title": "Invited-user counts", "subtitle": "Planned: waiting on data access", "stack": ["Supabase"], "status": "planned" },
+
+    { "id": "scheduler", "group": "warehouse", "title": "Cloud Scheduler", "subtitle": "10 Cloud Run Jobs on daily, weekly, and monthly schedules", "stack": ["Cloud Scheduler", "Cloud Run", "retries", "freshness checks", "log-based alerts"], "status": "shipped" },
+    { "id": "bq", "group": "warehouse", "title": "BigQuery", "subtitle": "Raw tables from each source", "stack": ["BigQuery"], "status": "shipped" },
+    { "id": "view", "group": "warehouse", "title": "Unified billing view", "subtitle": "Joins billing with customer and user metadata", "stack": ["BigQuery", "SQL"], "status": "shipped" },
+    { "id": "checks", "group": "warehouse", "title": "Validation checks", "subtitle": "15 automated checks before delivery", "stack": ["Python", "SQL"], "status": "shipped" },
+
+    { "id": "dashboard", "group": "outputs", "title": "Live dashboard", "subtitle": "Served from Cloud Run, cache prewarmed hourly", "stack": ["FastAPI", "Cloud Run", "Cloud Scheduler"], "status": "shipped" },
+    { "id": "progressive", "group": "outputs", "title": "Staged dashboard loading", "subtitle": "Planned: summary tiles first, then charts", "stack": ["FastAPI", "JavaScript"], "status": "planned" },
+    { "id": "weekly", "group": "outputs", "title": "Weekly workbook", "subtitle": "Customer activity, emailed Mondays", "stack": ["openpyxl", "Microsoft Graph"], "status": "shipped" },
+    { "id": "monthly", "group": "outputs", "title": "Monthly workbook", "subtitle": "LLM spend, emailed early each month", "stack": ["openpyxl", "Microsoft Graph"], "status": "shipped" },
+    { "id": "status", "group": "outputs", "title": "Status page", "subtitle": "Smoke tests every 2 hours", "stack": ["Cloud Scheduler", "FastAPI"], "status": "shipped" }
+  ],
+  "edges": [
+    { "from": "billing", "to": "bq", "label": "export" },
+    { "from": "supabase", "to": "bq", "label": "nightly" },
+    { "from": "posthog", "to": "bq", "label": "nightly" },
+    { "from": "invited", "to": "bq", "label": "planned", "status": "planned" },
+    { "from": "scheduler", "to": "bq", "label": "runs syncs" },
+    { "from": "bq", "to": "view", "label": "join" },
+    { "from": "view", "to": "checks", "label": "validate" },
+    { "from": "checks", "to": "dashboard", "label": "hourly" },
+    { "from": "dashboard", "to": "progressive", "label": "next", "status": "planned" },
+    { "from": "checks", "to": "weekly", "label": "weekly" },
+    { "from": "checks", "to": "monthly", "label": "monthly" },
+    { "from": "checks", "to": "status", "label": "every 2 h" }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "title": "Customer activity pipeline",
+  "summary": "Nightly syncs land product and billing data in BigQuery. Cloud Run serves a live dashboard and builds recurring xlsx reports. Kept high-level on purpose: no internal hostnames, tables, or customer data.",
+  "legend": { "shipped": "live", "pending": "planned", "edge": "data flow" },
+  "groups": [
+    { "id": "sources", "label": "Sources", "row": 0, "accent": "blue" },
+
+    { "id": "_s1", "row": 1, "spacer": true, "grow": 1 },
+    { "id": "ingest", "label": "Ingest · Cloud Run Jobs", "row": 1, "accent": "violet", "grow": 3 },
+
+    { "id": "warehouse", "label": "Warehouse · BigQuery", "row": 2, "accent": "teal" },
+
+    { "id": "serve", "label": "Serve · Cloud Run", "row": 3, "accent": "amber" },
+
+    { "id": "deliver", "label": "Deliver", "row": 4, "accent": "rose" }
+  ],
+  "nodes": [
+    { "id": "billing", "group": "sources", "title": "GCP billing export", "subtitle": "continuous native sync", "stack": ["Cloud Billing export", "BigQuery"] },
+    { "id": "supabase", "group": "sources", "title": "Supabase", "subtitle": "cases · tenants · users", "stack": ["Supabase (Postgres)"] },
+    { "id": "posthog", "group": "sources", "title": "PostHog", "subtitle": "product events", "stack": ["PostHog"] },
+    { "id": "invited", "group": "sources", "title": "Invited-user counts", "subtitle": "waiting on data-owner access", "status": "planned" },
+
+    { "id": "sync", "group": "ingest", "title": "Nightly sync jobs", "subtitle": "4 jobs · triggered by Cloud Scheduler", "stack": ["Cloud Run Jobs", "Cloud Scheduler"] },
+
+    { "id": "bq", "group": "warehouse", "title": "BigQuery warehouse", "subtitle": "raw syncs + unified billing view", "detail": "One view joins billing with customer and user metadata. The same view feeds the LLM spend report and the anomaly detectors.", "stack": ["BigQuery", "SQL views"], "grow": 1 },
+
+    { "id": "api", "group": "serve", "title": "Aggregation API", "subtitle": "hourly cache prewarm · sub-second reads", "stack": ["FastAPI", "Cloud Run"] },
+    { "id": "writers", "group": "serve", "title": "Report writers", "subtitle": "weekly + monthly workbooks", "stack": ["openpyxl", "Cloud Run", "Cloud Scheduler"] },
+    { "id": "smoke", "group": "serve", "title": "Smoke tests", "subtitle": "every 2 hours", "stack": ["Cloud Scheduler"] },
+
+    { "id": "dashboard", "group": "deliver", "title": "Live dashboard", "subtitle": "engineering leadership", "stack": ["FastAPI", "Chart.js"] },
+    { "id": "progressive", "group": "deliver", "title": "Progressive page load", "subtitle": "endpoint live · page wiring next", "status": "planned" },
+    { "id": "activity-report", "group": "deliver", "title": "Customer Activity Report", "subtitle": "weekly xlsx, Mondays → sales & CS", "stack": ["openpyxl", "Microsoft Graph email"] },
+    { "id": "spend-report", "group": "deliver", "title": "LLM Spend Report", "subtitle": "monthly xlsx, 3rd business day → CFO", "stack": ["openpyxl", "Microsoft Graph email"] },
+    { "id": "status", "group": "deliver", "title": "Status page", "subtitle": "25+ health checks → on-call", "stack": ["Cloud Run"] }
+  ],
+  "edges": [
+    { "from": "billing", "to": "bq", "label": "native export" },
+    { "from": "supabase", "to": "sync", "label": "nightly" },
+    { "from": "posthog", "to": "sync" },
+    { "from": "invited", "to": "sync", "status": "planned" },
+    { "from": "sync", "to": "bq", "label": "load" },
+    { "from": "bq", "to": "api", "label": "SQL" },
+    { "from": "bq", "to": "writers" },
+    { "from": "api", "to": "dashboard", "label": "cached JSON" },
+    { "from": "api", "to": "progressive", "status": "planned" },
+    { "from": "writers", "to": "activity-report" },
+    { "from": "writers", "to": "spend-report", "label": "Graph email" },
+    { "from": "smoke", "to": "status" }
+  ]
+}

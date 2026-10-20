@@ -1,0 +1,42 @@
+{
+  "title": "LLM cost anomaly detection",
+  "summary": "Daily LLM cost per function goes through layered rule-based detectors, then severity triage, and lands on the Cost Health dashboard. Kept high-level on purpose: no internal hostnames, tables, or customer data.",
+  "legend": { "shipped": "live", "pending": "planned", "edge": "data flow" },
+  "groups": [
+    { "id": "source", "label": "Source", "row": 0, "accent": "blue" },
+    { "id": "warehouse", "label": "Warehouse · BigQuery", "row": 1, "accent": "teal" },
+
+    { "id": "detectors", "label": "Detectors · backtested on history", "row": 2, "accent": "violet", "grow": 4 },
+    { "id": "forecast", "label": "Forecast", "row": 2, "accent": "amber", "grow": 1 },
+
+    { "id": "triage", "label": "Triage", "row": 3, "accent": "rose", "grow": 4 },
+    { "id": "_s3", "row": 3, "spacer": true, "grow": 1 },
+
+    { "id": "surface", "label": "Surface · FastAPI + Chart.js", "row": 4, "accent": "slate" }
+  ],
+  "nodes": [
+    { "id": "billing", "group": "source", "title": "GCP billing export", "subtitle": "LLM usage cost", "stack": ["Cloud Billing export"] },
+    { "id": "view", "group": "warehouse", "title": "Unified billing view", "subtitle": "daily cost per function", "stack": ["BigQuery", "SQL view"] },
+
+    { "id": "spike", "group": "detectors", "title": "Spike / drop rules", "subtitle": "vs trailing 3-month baseline" },
+    { "id": "sustained", "group": "detectors", "title": "Sustained elevation", "subtitle": "above p75 for 3+ days" },
+    { "id": "dow", "group": "detectors", "title": "Day-of-week volume", "subtitle": "28-day same-weekday baseline" },
+    { "id": "cusum", "group": "detectors", "title": "CUSUM layer", "subtitle": "next version", "status": "planned" },
+
+    { "id": "trend", "group": "forecast", "title": "Trend forecaster", "subtitle": "Theil-Sen + shrunk weekday factors", "stack": ["Theil-Sen", "James-Stein shrinkage"] },
+
+    { "id": "severity", "group": "triage", "title": "Severity tiering + dedupe", "subtitle": "one entry per incident, ranked" },
+
+    { "id": "email", "group": "surface", "title": "Email alerts", "subtitle": "high severity only", "status": "planned" },
+    { "id": "dashboard", "group": "surface", "title": "Cost Health dashboard", "subtitle": "anomaly log + trend panels", "stack": ["FastAPI", "Chart.js", "Cloud Run"], "grow": 3 }
+  ],
+  "edges": [
+    { "from": "billing", "to": "view", "label": "native export" },
+    { "from": "view", "to": "detectors", "label": "daily cost by function" },
+    { "from": "view", "to": "trend" },
+    { "from": "detectors", "to": "severity", "label": "flags" },
+    { "from": "severity", "to": "dashboard", "label": "anomaly log" },
+    { "from": "severity", "to": "email", "status": "planned" },
+    { "from": "trend", "to": "dashboard", "label": "trend" }
+  ]
+}
